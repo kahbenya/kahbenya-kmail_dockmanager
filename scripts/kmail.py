@@ -24,6 +24,8 @@ import sys
 import dbus
 import os
 import operator
+import subprocess
+import time
 
 try:
 	from dockmanager.dockmanager import DockManagerItem, DockManagerSink, DOCKITEM_IFACE
@@ -41,67 +43,41 @@ except ImportError, e:
 	print "pyinotify not available - not monitoring for new configurations"
 	monitor_with_inotify = False
 
-kdedir = os.path.expanduser("~/.kde/share/apps")
-if not os.path.exists(kdedir):
-        kdedir = os.path.expanduser("~/.kde4/share/apps")
-if not os.path.exists(kdedir):
-	kdedir = None
-        print "Can't find $KDEHOME dir"
-	exit()
-
-#places = "%s/%s" % (kdedir, "kfileplaces")
-#remotes = "%s/%s" % (kdedir, "remoteview")
-
 class clientItem(DockManagerItem):
 	def __init__(self, sink, path):
 		DockManagerItem.__init__(self, sink, path)
 
-		self.map = {}
+		self.map = {} #k,v => action_name, action_method
 		self.items = []
-		self.read_places()
-		self.add_remote()
+                self.sessionBus = dbus.SessionBus()
 
-		if monitor_with_inotify:
-			wm = pyinotify.WatchManager()
-			handler = clientMonitor(item=self)
-			notifier = GobjectNotifier(wm, default_proc_fun=handler)
-			wm.add_watch(places, pyinotify.ALL_EVENTS)
-			wm.add_watch(remotes, pyinotify.ALL_EVENTS)
+                self.kmail_connect()
+		self.add_options() #add to the menu the list of quick links for mail
 
-	def read_places(self):
-		dom = minidom.parse("%s/%s" % (places, "bookmarks.xml"))
-		for node in dom.getElementsByTagName('bookmark'):
-			uri=node.getAttribute("href")
-			node_list=node.getElementsByTagName("title")[0]
-			title=node_list.childNodes[0].nodeValue
-			metadata_node = node.getElementsByTagName("bookmark:icon")[0]
-			icon = metadata_node.getAttribute("name")
-			is_hidden = False
-			try:
-				node_hidden = node.getElementsByTagName("OnlyInApp")[0]
-				is_hidden = True
-			except: pass
-			try:
-				node_hidden = node.getElementsByTagName("IsHidden")[0]
-				is_hidden = node_hidden.childNodes[0].nodeValue
-			except: pass
-			if title in self.id_map.values():
-				title = uri
-			if is_hidden == "false":
-				self.map[uri] = title
-				self.items.append(self.add_menu_item(title, icon, ""))
+        def kmail_connect(self):
+                #dbus setup
+                #test for kontact being up and hence the kmail2 bus available
+                if not filter ((lambda x: 'org.kde.kmail2' in str(x).lower()),self.sessionBus.list_names()):
+                    #TODO: investigate starting in background/minimized
+                    #subprocess.call('kontact')
+                    os.system('kontact &')
+                    time.sleep(3) #ensure kmail is started and registered before getting object
+                self.kmail2 = self.sessionBus.get_object('org.kde.kmail2','/KMail')
 
-	def add_remote(self):
-		ls = os.listdir(remotes)
-		for file in ls:
-			name = file.replace(".desktop", "")
-			self.map[remotes + '/' + file] = name
-			self.items.append(self.add_menu_item(name, "folder-remote", ""))
 
+        def add_options(self):
+                self.map['New Message'] = 'newMessage'
+                self.items.append(self.add_menu_item("New Message","mail-send",""))
+                
 	def menu_pressed(self, menu_id):
-		for uri, title in self.map.iteritems():
-			if self.id_map[menu_id] == title:
-				os.system("dolphin %s &" % uri)
+               #check if kmail is running
+            self.kmail_connect() 
+	    for actionName, actionMethodName in self.map.iteritems():
+                if self.id_map[menu_id] == actionName:
+                    #get the function from the service
+                    actionMethod = self.kmail2.get_dbus_method(actionMethodName)
+                    if actionName == "New Message":
+		        actionMethod("","","",False,False,"","")
 
 	def clear_items(self):
                 for id in self.items:
@@ -153,7 +129,7 @@ if monitor_with_inotify:
 
 class clientSink(DockManagerSink):
 	def item_path_found(self, pathtoitem, item):
-		if item.Get(DOCKITEM_IFACE, "DesktopFile", dbus_interface="org.freedesktop.DBus.Properties").lower().find("dolphin") != -1:
+		if item.Get(DOCKITEM_IFACE, "DesktopFile", dbus_interface="org.freedesktop.DBus.Properties").lower().find("kontact") != -1:
 			self.items[pathtoitem] = clientItem(self, pathtoitem)
 	def clear_items(self):
 		for itempath in self.items:

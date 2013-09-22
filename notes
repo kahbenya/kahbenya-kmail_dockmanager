@@ -1,0 +1,72 @@
+Standard across all plugins
+class classItem (DockmanagerItem)
+	functions common
+		clear_items - to empty the items (need to use the remove_menu_item)
+		menu_pressed - trigger action on item press
+		update_menu - reload the items
+		<populate menu> - custom method that populates the menu
+	properties
+		self.map- dictionary that seems to hold custom mappings (not used by all plugins eg kate)
+
+	registering of items is done with the self.items.append(self.add_menu_item(menu-item-name,icon string, "")) construction
+
+
+DockManager plugins seem to use inotify for some reason, not sure what it is yet
+
+Boilerplate - GObjectNotifier class, clientsink class and cleanup functions
+ 
+clientSink - seems to get some link to the concerned application
+
+
+
+not sure where to get the icon string from 
+
+need to learn about dbus not too much tho freedesktop.org and web search
+
+qdbusviewer
+using qdbusviewer to find dbus info for relevant program
+double-click the methods to find their signatures (haven't found (or much looked for) a way to use command line tool qdbus to do this )
+signature will contain the type and the name of the parameters. Note Python not statically typed but the underlying dbus system is and will 
+throw an error if the wrong type is passed. None can't be passed, no translation for it
+
+?would be good to be able to extract signature of method to pass?
+
+Debugging
+use existing script (eg dolphin) to check out features and effects of methods and techniques
+Issue: cant see output and don't know where it is 
+Solved: (hopefully) run the script directly with python. When execution of script is ok then the process is in foreground. Killing the process
+removes the menu item.
+
+in clientsink class 
+this line: if item.Get(DOCKITEM_IFACE, "DesktopFile", dbus_interface="org.freedesktop.DBus.Properties").lower().find("dolphin") != -1:
+	seems to determine the icon(program) to attach the items to, but not sure how to debug this line or how to determine (with certainty) the program
+	name that it will recognize. At the moment the lowercase name of the program(or binary) seems to work
+
+
+### .info file ###
+the appname section does not seem to affect much, menu showed up in kontact when value there was dolphin(for testing)
+icon name/id string can be used in both this file and the code when registering a new item
+names can be retrieved from the "Select Icon" dialog in from the kmenu editor (right click kickoff > edit applications)
+
+Dev System
+Distributor ID:	Ubuntu
+Description:	Ubuntu 13.04
+Release:	13.04
+Codename:	raring
+
+Linux 3.8.0-29-generic #42-Ubuntu SMP  x86_64 GNU/Linux
+
+kdebase-runtime    4:4.10.97-0ubuntu1~ubuntu13.04~ppa1
+
+Qt tools trying to locate qt5 tools but qt4 tools installed and working
+
+References
+http://techbase.kde.org/index.php?title=Development/Tutorials/D-Bus/Introduction
+https://en.wikibooks.org/wiki/Python_Programming/Dbus
+http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#interfaces-and-methods
+http://www.documentroot.net/en/linux/python-dbus-tutorial (shows how to create dbus service and query it)
+http://www.freedesktop.org/wiki/Software/dbus/
+
+Examples are in the python-dbus-doc package
+
+

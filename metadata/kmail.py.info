@@ -1,5 +1,5 @@
 [DockmanagerHelper]
-Name=Kontact
-Description=Compose new email
-Icon=system-file-manager
+Name=Compose Mail
+Description=Call Kmail Composer
+Icon=internet-mail
 AppName=kontact
