@@ -60,7 +60,7 @@ class clientItem(DockManagerItem):
                 if not filter ((lambda x: 'org.kde.kmail2' in str(x).lower()),self.sessionBus.list_names()):
                     #TODO: investigate starting in background/minimized
                     #subprocess.call('kontact')
-                    os.system('kontact &')
+                    os.system('kontact --iconify &')
                     time.sleep(3) #ensure kmail is started and registered before getting object
                 self.kmail2 = self.sessionBus.get_object('org.kde.kmail2','/KMail')
 
