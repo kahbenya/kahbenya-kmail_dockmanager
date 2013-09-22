@@ -1,0 +1,5 @@
+[DockmanagerHelper]
+Name=Kontact
+Description=Compose new email
+Icon=system-file-manager
+AppName=kontact
