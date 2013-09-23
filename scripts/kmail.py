@@ -58,10 +58,7 @@ class clientItem(DockManagerItem):
                 #dbus setup
                 #test for kontact being up and hence the kmail2 bus available
                 if not filter ((lambda x: 'org.kde.kmail2' in str(x).lower()),self.sessionBus.list_names()):
-                    #TODO: investigate starting in background/minimized
-                    #subprocess.call('kontact')
-                    os.system('kontact --iconify &')
-                    time.sleep(5) #ensure kmail is started and registered before getting object
+                    subprocess.call(['kontact','--iconify'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
                 self.kmail2 = self.sessionBus.get_object('org.kde.kmail2','/KMail')
 
 
