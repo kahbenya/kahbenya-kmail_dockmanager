@@ -3,7 +3,7 @@ Kontact dockmanager plugin
 
 KDE Dockmanager plugin  for Kontact.
 
-Adds a new message option to the kontact icon in the taskbar.
+Adds a *New Message* option to the Kontact icon in the taskbar.
  
 Tested with Icon-only Task Manager. Should work with any task manager that supports DockManager plugins.
 
